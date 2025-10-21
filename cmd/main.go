@@ -28,12 +28,13 @@ func main() {
 	if pagLimDef == "" {
 		l.Fatal("paginator limit default is required")
 	}
-	ctx := context.Background()
-	enrollmentRepo := enrollment.NewRepo(l, db)
-	enrollmentSrv := enrollment.NewService(l, enrollmentRepo)
 
-	// h := handler.NewEnrollmentHTTPServer(ctx, enrollment.MakeEndpoints(enrollmentSrv, enrollment.Config{LimPageDef: pagLimDef}))
-	h := handler.NewEnrollmentHTTPServer(ctx, enrollment.MakeEndpoints(enrollmentSrv, enrollment.Config{LimPageDef: pagLimDef}))
+	ctx := context.Background()
+	enrollRepo := enrollment.NewRepo(l, db)
+	enrollSrv := enrollment.NewService(l, enrollRepo)
+
+	// h := handler.NewEnrollmentHTTPServer(ctx, enrollment.MakeEndpoints(enrollSrv))
+	h := handler.NewEnrollmentHTTPServer(ctx, enrollment.MakeEndpoints(enrollSrv, enrollment.Config{LimPageDef: pagLimDef}))
 
 	port := os.Getenv("PORT")
 	address := fmt.Sprintf("127.0.0.1:%s", port)
