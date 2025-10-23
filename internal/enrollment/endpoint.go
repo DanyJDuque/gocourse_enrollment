@@ -34,12 +34,6 @@ type (
 		Status *string `json:"status"`
 	}
 
-	// Response struct {
-	// 	Status int         `json:"status"`
-	// 	Data   interface{} `json:"data,omitempty"`
-	// 	Err    string      `json:"error,omitempty"`
-	// 	Meta   *meta.Meta  `json:"meta,omitempty"`
-	// }
 	Config struct {
 		LimPageDef string
 	}

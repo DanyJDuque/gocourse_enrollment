@@ -11,5 +11,5 @@ services:
       MYSQL_DATABASE: go_course_enrollment
     ports:
       - "3323:3306"
-    # volumes:
-    #   - ./.dockers/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    volumes:
+      - ./.dockers/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
