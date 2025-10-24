@@ -1,10 +1,13 @@
 module github.com/DanyJDuque/gocourse_enrollment
 
-go 1.23.0
+go 1.24
+
+toolchain go1.24.9
 
 require (
+	github.com/DanyJDuque/go_course_skd v0.0.2
 	github.com/DanyJDuque/go_lib_response v0.0.1
-	github.com/DanyJDuque/gocourse_domain v0.0.1
+	github.com/DanyJDuque/gocourse_domain v0.0.2
 	github.com/DanyJDuque/gocourse_meta v0.0.1
 	github.com/go-kit/kit v0.13.0
 	github.com/gorilla/mux v1.8.1
@@ -21,5 +24,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
+	github.com/ncostamagna/go_http_client v0.0.3 // indirect
 	golang.org/x/text v0.20.0 // indirect
 )

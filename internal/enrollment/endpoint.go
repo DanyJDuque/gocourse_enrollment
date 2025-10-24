@@ -6,6 +6,9 @@ import (
 
 	"github.com/DanyJDuque/go_lib_response/response"
 	"github.com/DanyJDuque/gocourse_meta/meta"
+
+	courseSdk "github.com/DanyJDuque/go_course_skd/course"
+	userSdk "github.com/DanyJDuque/go_course_skd/user"
 )
 
 type (
@@ -52,15 +55,20 @@ func makeCreateEndpoint(s Service) Controller {
 		req := request.(CreateReq)
 
 		if req.UserID == "" {
-			return nil, response.BadRequest(ErrUserIdRequiered.Error())
+			return nil, response.BadRequest(ErrUserIdRequired.Error())
 		}
 
 		if req.CourseID == "" {
-			return nil, response.BadRequest(ErrCourseIdRequiered.Error())
+			return nil, response.BadRequest(ErrCourseIdRequired.Error())
 		}
 
 		enroll, err := s.Create(ctx, req.UserID, req.CourseID)
 		if err != nil {
+
+			if errors.As(err, &userSdk.ErrNotFound{}) || errors.As(err, &courseSdk.ErrNotFound{}) {
+				return nil, response.NotFound(err.Error())
+			}
+
 			return nil, response.InternalServerError(err.Error())
 		}
 		return response.Created("success", enroll, nil), nil
@@ -94,13 +102,18 @@ func makeUpdateEndpoint(s Service) Controller {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(UpdateReq)
 		if req.Status != nil && *req.Status == "" {
-			return nil, response.BadRequest(ErrStatusRequiered.Error())
+			return nil, response.BadRequest(ErrStatusRequired.Error())
 		}
 
 		if err := s.Update(ctx, req.ID, req.Status); err != nil {
 			if errors.As(err, &ErrNotFound{}) {
 				return nil, response.NotFound(err.Error())
 			}
+
+			if errors.As(err, &ErrInvalidStatus{}) {
+				return nil, response.BadRequest(err.Error())
+			}
+
 			return nil, response.InternalServerError(err.Error())
 		}
 		return response.OK("success", nil, nil), nil
