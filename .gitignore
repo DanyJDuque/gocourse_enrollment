@@ -1,1 +1,4 @@
+*.log
 .env
+coverage.out
+coverage.html
