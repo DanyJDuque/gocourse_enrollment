@@ -116,7 +116,7 @@ func TestCreateEndpoint(t *testing.T) {
 					return nil, nil
 				},
 			},
-			repositoryMock: &mockRespository{
+			repositoryMock: &mockRepository{
 				CreateMock: func(ctx context.Context, enrollment *domain.Enrollment) error {
 					return errors.New("unexpected error")
 				},
@@ -136,7 +136,7 @@ func TestCreateEndpoint(t *testing.T) {
 					return nil, nil
 				},
 			},
-			repositoryMock: &mockRespository{
+			repositoryMock: &mockRepository{
 				CreateMock: func(ctx context.Context, enrollment *domain.Enrollment) error {
 					enrollment.ID = "10010"
 					return nil
@@ -192,7 +192,7 @@ func TestGetAllEndpoint(t *testing.T) {
 	l := log.New(io.Discard, "", 0)
 
 	t.Run("should return an error if Count returns an unexpected error", func(t *testing.T) {
-		service := enrollment.NewService(l, nil, nil, &mockRespository{
+		service := enrollment.NewService(l, nil, nil, &mockRepository{
 			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
 				return 0, errors.New("unexpected error")
 			},
@@ -208,7 +208,7 @@ func TestGetAllEndpoint(t *testing.T) {
 
 	t.Run("should return and error if meta returns a parsing errors", func(t *testing.T) {
 		wantErr := errors.New("strconv.Atoi: parsing \"invalid number\": invalid syntax")
-		service := enrollment.NewService(l, nil, nil, &mockRespository{
+		service := enrollment.NewService(l, nil, nil, &mockRepository{
 			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
 				return 3, nil
 
@@ -225,7 +225,7 @@ func TestGetAllEndpoint(t *testing.T) {
 
 	t.Run("should return and error if Getall respository resturns an unexpected error", func(t *testing.T) {
 		wantErr := errors.New("unexpected error")
-		service := enrollment.NewService(l, nil, nil, &mockRespository{
+		service := enrollment.NewService(l, nil, nil, &mockRepository{
 			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
 				return 3, nil
 
@@ -249,7 +249,7 @@ func TestGetAllEndpoint(t *testing.T) {
 			{ID: "2", UserID: "22", CourseID: "222", Status: "P"},
 			{ID: "3", UserID: "33", CourseID: "333", Status: "P"},
 		}
-		service := enrollment.NewService(l, nil, nil, &mockRespository{
+		service := enrollment.NewService(l, nil, nil, &mockRepository{
 			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
 				return 3, nil
 
@@ -274,5 +274,75 @@ func TestGetAllEndpoint(t *testing.T) {
 
 		enrollments := r.GetData().([]domain.Enrollment)
 		assert.Equal(t, wantEnrollments, enrollments)
+	})
+}
+
+//
+
+func TestUpdateEndpoint(t *testing.T) {
+	l := log.New(io.Discard, "", 0)
+
+	t.Run("should return an error if status is empty", func(t *testing.T) {
+		endpoint := enrollment.MakeEndpoints(nil, enrollment.Config{})
+		status := ""
+		_, err := endpoint.Update(context.Background(), enrollment.UpdateReq{Status: &status})
+		assert.Error(t, err)
+
+		resp := err.(response.Response)
+		assert.EqualError(t, enrollment.ErrStatusRequired, resp.Error())
+		assert.Equal(t, http.StatusBadRequest, resp.StatusCode())
+	})
+
+	t.Run("should return an error if repository retunrs a not found error", func(t *testing.T) {
+		service := enrollment.NewService(l, nil, nil, &mockRepository{
+			UpdateMock: func(ctx context.Context, id string, status *string) error {
+				return enrollment.ErrNotFound{EnrollmentsID: id}
+			},
+		})
+		endpoint := enrollment.MakeEndpoints(service, enrollment.Config{})
+		status := "A"
+		_, err := endpoint.Update(context.Background(), enrollment.UpdateReq{ID: "20", Status: &status})
+		assert.Error(t, err)
+
+		resp := err.(response.Response)
+		assert.EqualError(t, enrollment.ErrNotFound{EnrollmentsID: "20"}, resp.Error())
+		assert.Equal(t, http.StatusNotFound, resp.StatusCode())
+	})
+
+	t.Run("should return an error if repository retunrs a unexpected error", func(t *testing.T) {
+		wantErr := errors.New("unexpected error")
+		service := enrollment.NewService(l, nil, nil, &mockRepository{
+			UpdateMock: func(ctx context.Context, id string, status *string) error {
+				return errors.New("unexpected error")
+			},
+		})
+		endpoint := enrollment.MakeEndpoints(service, enrollment.Config{})
+		status := "A"
+		_, err := endpoint.Update(context.Background(), enrollment.UpdateReq{ID: "20", Status: &status})
+		assert.Error(t, err)
+
+		resp := err.(response.Response)
+		assert.EqualError(t, wantErr, resp.Error())
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode())
+	})
+
+	t.Run("should return success", func(t *testing.T) {
+		service := enrollment.NewService(l, nil, nil, &mockRepository{
+			UpdateMock: func(ctx context.Context, id string, status *string) error {
+				assert.Equal(t, "20", id)
+				assert.NotNil(t, status)
+				assert.Equal(t, "A", *status)
+				return nil
+			},
+		})
+		endpoint := enrollment.MakeEndpoints(service, enrollment.Config{})
+		status := "A"
+		resp, err := endpoint.Update(context.Background(), enrollment.UpdateReq{ID: "20", Status: &status})
+		assert.Nil(t, err)
+
+		r := resp.(response.Response)
+		assert.Equal(t, http.StatusOK, r.StatusCode())
+		assert.Empty(t, r.Error())
+		assert.Nil(t, r.GetData())
 	})
 }

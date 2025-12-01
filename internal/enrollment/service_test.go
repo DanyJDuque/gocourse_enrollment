@@ -21,7 +21,7 @@ func TestService_GetAll(t *testing.T) {
 		var want error = errors.New("my error")
 		var wantCounter int = 1
 		var counter = 0
-		repo := &mockRespository{
+		repo := &mockRepository{
 			GetAllMock: func(ctx context.Context, filters enrollment.Filters, offset, limit int) ([]domain.Enrollment, error) {
 				counter++
 				return nil, errors.New("my error")
@@ -49,7 +49,7 @@ func TestService_GetAll(t *testing.T) {
 		}
 		var wantCounter int = 1
 		var counter int = 0
-		repo := &mockRespository{
+		repo := &mockRepository{
 			GetAllMock: func(ctx context.Context, filters enrollment.Filters, offset, limit int) ([]domain.Enrollment, error) {
 				counter++
 				return []domain.Enrollment{
@@ -87,7 +87,7 @@ func TestService_Update(t *testing.T) {
 		var want error = errors.New("my error")
 		var wantCounter int = 1
 		var counter int = 0
-		repo := &mockRespository{
+		repo := &mockRepository{
 			UpdateMock: func(ctx context.Context, id string, status *string) error {
 				counter++
 				return errors.New("my error")
@@ -108,7 +108,7 @@ func TestService_Update(t *testing.T) {
 		var counter int = 0
 		var wantStatus string = "A"
 		var wantID string = "11"
-		repo := &mockRespository{
+		repo := &mockRepository{
 			UpdateMock: func(ctx context.Context, id string, status *string) error {
 				counter++
 				assert.Equal(t, wantID, id)
@@ -133,7 +133,7 @@ func TestService_Count(t *testing.T) {
 		var want error = errors.New("my error")
 		var wantCounter int = 1
 		var counter int = 0
-		repo := &mockRespository{
+		repo := &mockRepository{
 			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
 				counter++
 				return 0, errors.New("my error")
@@ -151,7 +151,7 @@ func TestService_Count(t *testing.T) {
 		var wantCounter int = 1
 		var counter int = 0
 		var want int = 10
-		repo := &mockRespository{
+		repo := &mockRepository{
 			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
 				counter++
 				return 10, nil
@@ -234,7 +234,7 @@ func TestService_Create(t *testing.T) {
 			},
 		}
 
-		repoSdk := &mockRespository{
+		repoSdk := &mockRepository{
 			CreateMock: func(ctx context.Context, erroll *domain.Enrollment) error {
 				counter++
 				return errors.New("repository error")
@@ -275,7 +275,7 @@ func TestService_Create(t *testing.T) {
 				return nil, nil
 			},
 		}
-		repoSdk := &mockRespository{
+		repoSdk := &mockRepository{
 			CreateMock: func(ctx context.Context, erroll *domain.Enrollment) error {
 				counter++
 				erroll.ID = "123"
