@@ -223,4 +223,56 @@ func TestGetAllEndpoint(t *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode())
 	})
 
+	t.Run("should return and error if Getall respository resturns an unexpected error", func(t *testing.T) {
+		wantErr := errors.New("unexpected error")
+		service := enrollment.NewService(l, nil, nil, &mockRespository{
+			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
+				return 3, nil
+
+			},
+			GetAllMock: func(ctx context.Context, filters enrollment.Filters, limit, offset int) ([]domain.Enrollment, error) {
+				return nil, errors.New("unexpected error")
+			},
+		})
+		endpoint := enrollment.MakeEndpoints(service, enrollment.Config{LimPageDef: "10"})
+		_, err := endpoint.GetAll(context.Background(), enrollment.GetAllReq{})
+
+		assert.Error(t, err)
+		resp := err.(response.Response)
+		assert.EqualError(t, wantErr, resp.Error())
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode())
+	})
+
+	t.Run("should return the enrollments", func(t *testing.T) {
+		wantEnrollments := []domain.Enrollment{
+			{ID: "1", UserID: "11", CourseID: "111", Status: "P"},
+			{ID: "2", UserID: "22", CourseID: "222", Status: "P"},
+			{ID: "3", UserID: "33", CourseID: "333", Status: "P"},
+		}
+		service := enrollment.NewService(l, nil, nil, &mockRespository{
+			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
+				return 3, nil
+
+			},
+			GetAllMock: func(ctx context.Context, filters enrollment.Filters, limit, offset int) ([]domain.Enrollment, error) {
+				return []domain.Enrollment{
+					{ID: "1", UserID: "11", CourseID: "111", Status: "P"},
+					{ID: "2", UserID: "22", CourseID: "222", Status: "P"},
+					{ID: "3", UserID: "33", CourseID: "333", Status: "P"},
+				}, nil
+			},
+		})
+		endpoint := enrollment.MakeEndpoints(service, enrollment.Config{LimPageDef: "10"})
+		resp, err := endpoint.GetAll(context.Background(), enrollment.GetAllReq{Page: 1, Limit: 10})
+
+		assert.Nil(t, err)
+		assert.NotNil(t, resp)
+
+		r := resp.(response.Response)
+		assert.Equal(t, http.StatusOK, r.StatusCode())
+		assert.Empty(t, r.Error())
+
+		enrollments := r.GetData().([]domain.Enrollment)
+		assert.Equal(t, wantEnrollments, enrollments)
+	})
 }
