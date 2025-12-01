@@ -186,3 +186,41 @@ func TestCreateEndpoint(t *testing.T) {
 
 	}
 }
+
+func TestGetAllEndpoint(t *testing.T) {
+	wantErr := errors.New("unexpected error")
+	l := log.New(io.Discard, "", 0)
+
+	t.Run("should return an error if Count returns an unexpected error", func(t *testing.T) {
+		service := enrollment.NewService(l, nil, nil, &mockRespository{
+			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
+				return 0, errors.New("unexpected error")
+			},
+		})
+		endpoint := enrollment.MakeEndpoints(service, enrollment.Config{})
+		_, err := endpoint.GetAll(context.Background(), enrollment.GetAllReq{})
+		assert.Error(t, err)
+
+		resp := err.(response.Response)
+		assert.EqualError(t, wantErr, resp.Error())
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode())
+	})
+
+	t.Run("should return and error if meta returns a parsing errors", func(t *testing.T) {
+		wantErr := errors.New("strconv.Atoi: parsing \"invalid number\": invalid syntax")
+		service := enrollment.NewService(l, nil, nil, &mockRespository{
+			CountMock: func(ctx context.Context, filters enrollment.Filters) (int, error) {
+				return 3, nil
+
+			},
+		})
+		endpoint := enrollment.MakeEndpoints(service, enrollment.Config{LimPageDef: "invalid number"})
+		_, err := endpoint.GetAll(context.Background(), enrollment.GetAllReq{})
+		assert.Error(t, err)
+
+		resp := err.(response.Response)
+		assert.EqualError(t, wantErr, resp.Error())
+		assert.Equal(t, http.StatusInternalServerError, resp.StatusCode())
+	})
+
+}
