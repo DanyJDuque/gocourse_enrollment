@@ -1,48 +1,70 @@
-package main
+package test
 
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"testing"
 	"time"
 
+	courseSdk "github.com/DanyJDuque/go_course_skd/course/mock"
+	userSdk "github.com/DanyJDuque/go_course_skd/user/mock"
+	"github.com/DanyJDuque/gocourse_domain/domain"
 	"github.com/DanyJDuque/gocourse_enrollment/internal/enrollment"
 	"github.com/DanyJDuque/gocourse_enrollment/pkg/bootstrap"
 	"github.com/DanyJDuque/gocourse_enrollment/pkg/handler"
 	"github.com/joho/godotenv"
-
-	courseSdk "github.com/DanyJDuque/go_course_skd/course"
-	userSdk "github.com/DanyJDuque/go_course_skd/user"
+	"github.com/ncostamagna/go_http_client/client"
 )
 
-func main() {
+var cli client.Transport
 
-	_ = godotenv.Load()
-	l := bootstrap.InitLogger()
+func TestMain(m *testing.M) {
+
+	_ = godotenv.Load("../.env")
+	l := log.New(io.Discard, "", 0)
 
 	db, err := bootstrap.DBConection()
 	if err != nil {
 		l.Fatal(err)
 	}
 
+	tx := db.Begin()
+
 	pagLimDef := os.Getenv("PAGINATOR_LIMIT_DEFAULT")
 	if pagLimDef == "" {
 		l.Fatal("paginator limit default is required")
 	}
 
-	courseTrans := courseSdk.NewHttpClient(os.Getenv("API_COURSE_URL"), os.Getenv("API_COURSE_TOKEN"))
-	userTrans := userSdk.NewHttpClient(os.Getenv("API_USER_URL"), "")
+	userSdk := &userSdk.UserSDKMock{
+		GetMock: func(id string) (*domain.User, error) {
+			return nil, nil
+
+		},
+	}
+
+	courseSdk := &courseSdk.CourseSDKMock{
+		GetMock: func(id string) (*domain.Course, error) {
+			return nil, nil
+		},
+	}
 
 	ctx := context.Background()
-	enrollRepo := enrollment.NewRepo(l, db)
-	enrollSrv := enrollment.NewService(l, userTrans, courseTrans, enrollRepo)
+	enrollRepo := enrollment.NewRepo(l, tx)
+	enrollSrv := enrollment.NewService(l, userSdk, courseSdk, enrollRepo)
 
 	h := handler.NewEnrollmentHTTPServer(ctx, enrollment.MakeEndpoints(enrollSrv, enrollment.Config{LimPageDef: pagLimDef}))
 
 	port := os.Getenv("PORT")
 	address := fmt.Sprintf("127.0.0.1:%s", port)
+
+	// header := http.Header{}
+	// header.Set("Content-Type", "application/json")
+
+	cli = client.New(nil, "http://"+address, 0, false)
 
 	srv := &http.Server{
 		Handler:      accessControl(h),
@@ -57,10 +79,15 @@ func main() {
 		errCh <- srv.ListenAndServe()
 	}()
 
-	err = <-errCh
-	if err != nil {
-		log.Fatal(err)
+	r := m.Run()
+
+	if err := srv.Shutdown(context.Background()); err != nil {
+		l.Println(err)
 	}
+
+	tx.Rollback()
+	os.Exit(r) // el cierre de los tests
+
 }
 
 func accessControl(h http.Handler) http.Handler {
@@ -73,5 +100,6 @@ func accessControl(h http.Handler) http.Handler {
 			return
 		}
 		h.ServeHTTP(w, r)
+
 	})
 }

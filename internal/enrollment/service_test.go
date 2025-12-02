@@ -71,11 +71,6 @@ func TestService_GetAll(t *testing.T) {
 		assert.NotNil(t, enrollments)
 		assert.Equal(t, want, enrollments)
 		assert.Equal(t, wantCounter, counter)
-
-		// assert.Equal(t, want[0].ID, enrollments[0].ID)
-		// assert.Equal(t, want[0].UserID, enrollments[0].UserID)
-		// assert.Equal(t, want[0].CourseID, enrollments[0].CourseID)
-		// assert.Equal(t, want[0].Status, enrollments[0].Status)
 	})
 }
 
@@ -122,7 +117,6 @@ func TestService_Update(t *testing.T) {
 		err := service.Update(context.Background(), "11", &status)
 		assert.Nil(t, err)
 		assert.Equal(t, wantCounter, counter)
-
 	})
 }
 
@@ -162,7 +156,6 @@ func TestService_Count(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, wantCounter, counter)
 		assert.Equal(t, want, count)
-
 	})
 }
 
@@ -249,7 +242,6 @@ func TestService_Create(t *testing.T) {
 		assert.Equal(t, wantCounter, counter)
 		assert.EqualError(t, want, err.Error())
 		assert.Nil(t, enrollment)
-
 	})
 
 	t.Run("should create an enrollment", func(t *testing.T) {

@@ -277,8 +277,6 @@ func TestGetAllEndpoint(t *testing.T) {
 	})
 }
 
-//
-
 func TestUpdateEndpoint(t *testing.T) {
 	l := log.New(io.Discard, "", 0)
 
