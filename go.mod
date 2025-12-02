@@ -12,6 +12,7 @@ require (
 	github.com/go-kit/kit v0.13.0
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
+	github.com/ncostamagna/go_http_client v0.0.3
 	github.com/stretchr/testify v1.11.1
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.0
@@ -26,7 +27,6 @@ require (
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/ncostamagna/go_http_client v0.0.3 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/text v0.20.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
